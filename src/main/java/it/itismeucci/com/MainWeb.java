@@ -92,7 +92,7 @@ public class MainWeb implements Runnable{
 				String contentMimeType = "text/html";
 				//read content to return to client
 				byte[] fileData = readFileData(file, fileLength);
-					
+	
 				// we send HTTP Headers with data to client
 				out.println("HTTP/1.1 501 Not Implemented");
 				out.println("Server: Java HTTP Server from SSaurel : 1.0");
@@ -106,29 +106,30 @@ public class MainWeb implements Runnable{
 				dataOut.flush();
 				
 			} else {
-				// GET or HEAD method
-				if (fileRequested.endsWith("/")) {
-					fileRequested += DEFAULT_FILE;
-				}
-				
+
 				File file = new File(WEB_ROOT, fileRequested);
 				int fileLength = (int) file.length();
 				String content = getContentType(fileRequested);
 				
+				// GET or HEAD method
+				if (fileRequested.endsWith("/")) {
+
+					//read content to return to client
+					byte[] fileData = readFileData(file, fileLength);
+
+					//send HTTP Headers 301
+					fileMove(out, dataOut, fileLength , fileData);
+
+					fileRequested += DEFAULT_FILE;
+				}
+				
+				
 				if (method.equals("GET")) { // GET method so we return content
 					byte[] fileData = readFileData(file, fileLength);
 					
-					// send HTTP Headers
-					out.println("HTTP/1.1 200 OK");
-					out.println("Server: Java HTTP Server from SSaurel : 1.0");
-					out.println("Date: " + new Date());
-					out.println("Content-type: " + content);
-					out.println("Content-length: " + fileLength);
-					out.println(); // blank line between headers and content, very important !
-					out.flush(); // flush character output stream buffer
+					// send HTTP Headers 200
+					fileFound(out, dataOut, content, fileLength, fileData);
 					
-					dataOut.write(fileData, 0, fileLength);
-					dataOut.flush();
 				}
 				
 				if (verbose) {
@@ -178,15 +179,48 @@ public class MainWeb implements Runnable{
 		
 		return fileData;
 	}
-	
+
+	/*
 	// return supported MIME Types
 	private String getContentType(String fileRequested) {
 		if (fileRequested.endsWith(".htm")  ||  fileRequested.endsWith(".html"))
 			return "text/html";
+		else{
+			return "text/plain";
+		}
+	}*/
+
+	//request
+	private String getContentType(String fileRequested) {
+		if (fileRequested.endsWith(".htm")  ||  fileRequested.endsWith(".html"))
+			return "text/html";
+  
+		else if(fileRequested.endsWith(".css"))
+			return "text/css";
+  
+		else if(fileRequested.endsWith(".png"))
+			return "image/png";
+		
+		else if(fileRequested.endsWith(".jpg"))
+			return "image/jpg";
+		
+		else if(fileRequested.endsWith(".jpeg"))
+			return "image/jpeg";
+
+		else if(fileRequested.endsWith(".webp"))
+			return "image/webp";
+
+		else if(fileRequested.endsWith(".javascript"))
+			return "text/javascript";
+  
+		else if(fileRequested.endsWith(".xml"))
+			return "text/xml";
+  
 		else
 			return "text/plain";
 	}
-	
+ 
+	//return header 404
 	private void fileNotFound(PrintWriter out, OutputStream dataOut, String fileRequested) throws IOException {
 		File file = new File(WEB_ROOT, FILE_NOT_FOUND);
 		int fileLength = (int) file.length();
@@ -194,7 +228,7 @@ public class MainWeb implements Runnable{
 		byte[] fileData = readFileData(file, fileLength);
 		
 		out.println("HTTP/1.1 404 File Not Found");
-		out.println("Server: Java HTTP Server from SSaurel : 1.0");
+		out.println("Server: Java HTTP Server from dela : 1.0");
 		out.println("Date: " + new Date());
 		out.println("Content-type: " + content);
 		out.println("Content-length: " + fileLength);
@@ -208,5 +242,43 @@ public class MainWeb implements Runnable{
 			System.out.println("File " + fileRequested + " not found");
 		}
 	}
+
 	
+	//return header 301
+	private void fileMove(PrintWriter out, OutputStream dataOut, int lung, byte[] b) throws IOException {
+
+		int fileLength = lung;
+		byte[] fileData = b;
+
+		out.println("HTTP/1.1 301 ");
+		out.println("Server: Java HTTP Server from dela : 1.0");
+		out.println("Location: http://localhost:8080/index.html");
+		
+		dataOut.write(fileData, 0, fileLength);
+		dataOut.flush();
+	}
+
+	//return header 200
+	private void fileFound(PrintWriter out, OutputStream dataOut, String file, int lung, byte[] b) throws IOException {
+		String content = file;
+		int fileLength = lung;
+		byte[] fileData = b;
+
+		out.println("HTTP/1.1 200 OK");
+		out.println("Server: Java HTTP Server from dela : 1.0");
+		out.println("Date: " + new Date());
+		out.println("Content-type: " + content);
+		out.println("Content-length: " + fileLength);
+		out.println(); // blank line between headers and content, very important !
+		out.flush(); // flush character output stream buffer
+		
+
+		dataOut.write(fileData, 0, fileLength);
+		dataOut.flush();
+	}	
 }
+
+	
+	
+		
+	
